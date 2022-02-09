@@ -264,6 +264,18 @@ class ControllerExtensionModuleInnokassa extends Controller
     {
         $this->load->model('extension/module/innokassa');
         $this->model_extension_module_innokassa->install();
+
+        $this->load->model('setting/event');
+        $this->model_setting_event->addEvent(
+            'innokassa',
+            'admin/view/sale/order_form/after',
+            'extension/module/innokassa/eventSaleOrderFormInfoAfter'
+        );
+        $this->model_setting_event->addEvent(
+            'innokassa',
+            'admin/view/sale/order_info/after',
+            'extension/module/innokassa/eventSaleOrderFormInfoAfter'
+        );
     }
 
     /**
@@ -275,6 +287,48 @@ class ControllerExtensionModuleInnokassa extends Controller
     {
         $this->load->model('extension/module/innokassa');
         $this->model_extension_module_innokassa->uninstall();
+
+        $this->load->model('setting/event');
+        $this->model_setting_event->deleteEventByCode('innokassa');
+    }
+
+    //######################################################################
+
+    /**
+     * Обработчик событий:
+     *  - admin/view/sale/order_form/afte
+     *  - admin/view/sale/order_info/after
+     *
+     * @param string $route
+     * @param array $args
+     * @param string $output
+     * @return void
+     */
+    public function eventSaleOrderFormInfoAfter(&$route, &$args, &$output)
+    {
+        $script = [
+            '<script src="/admin/view/template/extension/module/innokassa-btn-new-receipt.js"></script>',
+            '<script src="/admin/view/template/extension/module/innokassa-rb4cms.js"></script>'
+        ];
+        $needle = '</div>';
+        $pos = strripos($output, $needle) + strlen($needle);
+        $output = substr($output, 0, $pos) . implode('', $script) . substr($output, $pos);
+
+        $modal = '<div id="receipt-builder-window" class="modal"> \
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                        <h4 class="modal-title"></h4>
+                    </div>
+                    <div class="modal-body">
+                    </div>
+                </div>
+            </div>
+        </div>';
+        $needle = '</body>';
+        $pos = strripos($output, $needle);
+        $output = substr($output, 0, $pos) . $modal . substr($output, $pos);
     }
 
     //######################################################################

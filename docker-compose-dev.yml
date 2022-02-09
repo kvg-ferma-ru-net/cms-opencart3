@@ -30,6 +30,8 @@ services:
       - ./src/admin/language/ru-ru/extension/module/innokassa.php:/var/www/html/admin/language/ru-ru/extension/module/innokassa.php
       - ./src/admin/model/extension/module/innokassa.php:/var/www/html/admin/model/extension/module/innokassa.php
       - ./src/admin/view/template/extension/module/innokassa.twig:/var/www/html/admin/view/template/extension/module/innokassa.twig
+      - ./src/admin/view/template/extension/module/innokassa-btn-new-receipt.js:/var/www/html/admin/view/template/extension/module/innokassa-btn-new-receipt.js
+      - ./src/admin/view/template/extension/module/innokassa-rb4cms.js:/var/www/html/admin/view/template/extension/module/innokassa-rb4cms.js
       - ./src/system/library/innokassa/:/var/www/html/system/library/innokassa/
       - ./.docker/php/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
       - ./.docker/php/php.ini:/usr/local/etc/php/conf.d/php.ini
@@ -51,6 +53,8 @@ services:
       - ./src/admin/language/ru-ru/extension/module/innokassa.php:/var/www/html/admin/language/ru-ru/extension/module/innokassa.php
       - ./src/admin/model/extension/module/innokassa.php:/var/www/html/admin/model/extension/module/innokassa.php
       - ./src/admin/view/template/extension/module/innokassa.twig:/var/www/html/admin/view/template/extension/module/innokassa.twig
+      - ./src/admin/view/template/extension/module/innokassa-btn-new-receipt.js:/var/www/html/admin/view/template/extension/module/innokassa-btn-new-receipt.js
+      - ./src/admin/view/template/extension/module/innokassa-rb4cms.js:/var/www/html/admin/view/template/extension/module/innokassa-rb4cms.js
       - ./src/system/library/innokassa/:/var/www/html/system/library/innokassa/
       - ./.docker/webserver/host.conf:/etc/apache2/sites-available/000-default.conf
       - ./.docker/webserver/apache2.conf:/etc/apache2/apache2.conf
