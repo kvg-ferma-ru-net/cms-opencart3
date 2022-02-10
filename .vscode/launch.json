@@ -10,6 +10,10 @@
             "log": true,
             "pathMappings": {
                 "/var/www/html/": "${workspaceFolder}/src/",
+            },
+            "xdebugSettings": {
+                "max_children": 9999,
+                "show_hidden": 1
             }
         }
     ]
