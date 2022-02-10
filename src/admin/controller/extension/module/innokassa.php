@@ -122,6 +122,7 @@ class ControllerExtensionModuleInnokassa extends Controller
         $data['help_order_status1'] = $this->language->get('help_order_status1');
         $data['help_order_status2'] = $this->language->get('help_order_status2');
         $data['help_scheme'] = $this->language->get('help_scheme');
+        $data['help_shipping_vat'] = $this->language->get('help_shipping_vat');
 
         $data['text_scheme2'] = $this->language->get('text_scheme2');
         $data['text_scheme12'] = $this->language->get('text_scheme12');
@@ -163,6 +164,14 @@ class ControllerExtensionModuleInnokassa extends Controller
                 $data["module_innokassa_order_status{$i}"] = $this->config->get("module_innokassa_order_status{$i}");
             }
         }
+
+        $data['vats'] = [];
+        $vats = Innokassa\MDK\Entities\Atoms\Vat::all();
+        foreach ($vats as $vat) {
+            $data['vats'][$vat->getCode()] = $vat->getName();
+        }
+
+        $data['module_innokassa_shipping_vat'] = $this->config->get('module_innokassa_shipping_vat');
 
         return $data;
     }

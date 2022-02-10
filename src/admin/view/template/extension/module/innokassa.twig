@@ -102,6 +102,20 @@
                         </div>
                     </div>
 
+                    <!-- Shipping vat -->
+                    <div class="form-group required">
+                        <label class="col-sm-2 control-label" for="entry-shipping-vat">
+                            {{ help_shipping_vat }}
+                        </label>
+                        <div class="col-sm-10">
+                            <select name="module_innokassa_shipping_vat" id="entry-shipping-vat" class="form-control">
+                                {% for i,v in vats %}
+                                    <option value="{{ i }}" {% if module_innokassa_shipping_vat == i %}selected{% endif %}>{{ v }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
                     <!-- Location -->
                     <div class="form-group required">
                         <label class="col-sm-2 control-label" for="location">

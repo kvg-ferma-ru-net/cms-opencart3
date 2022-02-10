@@ -33,6 +33,11 @@ class SettingsConcrete implements Innokassa\MDK\Settings\SettingsInterface
         return intval($this->get('module_innokassa_taxation'));
     }
 
+    public function getShippingVat(): int
+    {
+        return intval($this->get('module_innokassa_shipping_vat'));
+    }
+
     public function getScheme(): int
     {
         return boolval($this->get('module_innokassa_scheme'));
