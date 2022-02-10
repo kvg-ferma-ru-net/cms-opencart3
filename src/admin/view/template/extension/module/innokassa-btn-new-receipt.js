@@ -1,5 +1,9 @@
 
 
+/**
+ * Получить идентификатор заказа
+ * @returns {number|false}
+ */
 function GetOrderId()
 {
     let p = window.location.search;
@@ -7,6 +11,23 @@ function GetOrderId()
     return p ? p[1] : false;
 }
 
+/**
+ * Получить user_token
+ * @returns {string|false}
+ */
+function GetUserToken()
+{
+    let p = window.location.search;
+    p = p.match(new RegExp('user_token' + '=([^&=]+)'));
+    return p ? p[1] : false;
+}
+
+// #########################################################################
+
+/**
+ * Добавить кнопки фискализации 
+ * @param {HTMLElement} element 
+ */
 function AddButtonFiscalization(element) {
     let buttonGroup = document.createElement('div');
     buttonGroup.classList.add('btn', 'dropdown');
@@ -47,52 +68,66 @@ function AddButtonFiscalization(element) {
     element.prepend(buttonGroup);
 }
 
+/**
+ * Обработчик создания чека
+ * @param {*} event объект события
+ * @param {number} receiptType тип чека (1 - приход, 2 - возврат)
+ */
 function CreateReceipt(event, receiptType) {
     event.preventDefault();
+
     let orderId = GetOrderId();
-    let body = document.querySelector('#receipt-builder-window div.modal-body');
-    const builder = new innokassa.ReceiptBuilder({
-        element: body,
-        receiptType:receiptType,
-        canHeaderRender: false
-    });
-    builder.getReceipt().setOrderId(orderId);
-    builder.setCallbackSend(() => {
-        if (builder.getReceipt().reportValidity()) {
-            console.log(builder.getReceipt().getRawObject());
+    let userToken = GetUserToken();
+
+    $.ajax({
+        url: `/admin/index.php?route=extension/module/innokassa/ajaxGetOrder&user_token=${userToken}&order_id=${orderId}`,
+        type: 'get',
+        crossDomain: true,
+        success: function(json) {
+
+            console.log(json);
+
+            if (!json.success) {
+                return;
+            }
+
+            let body = document.querySelector('#receipt-builder-window div.modal-body');
+            const builder = new innokassa.ReceiptBuilder({
+                element: body,
+                receiptType: receiptType,
+                canHeaderRender: false
+            });
+
+            let receipt = builder.getReceipt();
+            receipt.setOrderId(orderId);
+            receipt.setEmail(json.notify.email);
+            receipt.setPhone(json.notify.phone);
+
+            json.items.forEach((item) => {
+                receipt.getItems().add(
+                    (new innokassa.ReceiptItem())
+                        .setName(item.name)
+                        .setPrice(item.price)
+                        .setQuantity(item.quantity)
+                        .setType(item.type)
+                        .setPaymentMethod(item.paymentMethod)
+                        .setVat(item.vat)
+                );
+            });
+
+            builder.render();
+
+            let header = document.querySelector('#receipt-builder-window div.modal-header .modal-title');
+            header.textContent = builder.getHeader();
+
+            $("#receipt-builder-window").modal();
         }
     });
-
-    builder.setCallbackClose(() => {
-        console.log('close');
-    });
-
-    builder.getReceipt().getItems().add(
-        (new innokassa.ReceiptItem())
-            .setName('name')
-            .setPrice('500')
-            .setQuantity(2)
-            .setType(1)
-            .setPaymentMethod(1)
-            .setVat(6),
-    );
-
-    builder.getPrintables().add(
-        (new innokassa.Printable())
-            .setLink('qweqwe', 'https://innokassa.ru')
-            .setSubType(1)
-            .setAmount(1756)
-            .setDate('2020'),
-    );
-
-    builder.render();
-
-    let header = document.querySelector('#receipt-builder-window div.modal-header .modal-title');
-    header.textContent = builder.getHeader();
-
-    $("#receipt-builder-window").modal();
 }
 
 //##########################################################################
 
-AddButtonFiscalization(document.querySelector('div.pull-right'));
+// если идентификатор заказа есть тогда вставляем кнопки
+if (GetOrderId()) {
+    AddButtonFiscalization(document.querySelector('div.pull-right'));
+}

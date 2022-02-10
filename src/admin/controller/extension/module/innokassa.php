@@ -2,6 +2,7 @@
 
 include_once(DIR_SYSTEM . 'library/innokassa/mdk/src/autoload.php');
 include_once(DIR_SYSTEM . 'library/innokassa/SettingsConcrete.php');
+include_once(DIR_SYSTEM . 'library/innokassa/ReceiptAdapterConcrete.php');
 
 // phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
 class ControllerExtensionModuleInnokassa extends Controller
@@ -338,6 +339,32 @@ class ControllerExtensionModuleInnokassa extends Controller
         $needle = '</body>';
         $pos = strripos($output, $needle);
         $output = substr($output, 0, $pos) . $modal . substr($output, $pos);
+    }
+
+    //######################################################################
+
+    public function ajaxGetOrder()
+    {
+        $idOrder = $this->request->get["order_id"];
+
+        $this->load->model('sale/order');
+
+        $conv = new \Innokassa\MDK\Storage\ConverterStorage();
+
+        $this->load->model('setting/setting');
+        $settings = $this->model_setting_setting->getSetting("module_innokassa");
+        $adapter = new ReceiptAdapterConcrete($this->model_sale_order, new SettingsConcrete($settings));
+        $items = $adapter->getItems($idOrder, 1);
+        $notify = $adapter->getNotify($idOrder, 1);
+
+        $this->response->addHeader('Content-Type: application/json');
+        $this->response->setOutput(json_encode(
+            [
+                "success" => true,
+                "items" => $conv->itemsToArray($items),
+                "notify" => $conv->notifyToArray($notify)
+            ]
+        ));
     }
 
     //######################################################################
