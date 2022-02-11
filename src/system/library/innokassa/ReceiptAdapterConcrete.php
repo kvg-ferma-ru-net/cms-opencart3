@@ -14,12 +14,19 @@ use Innokassa\MDK\Collections\ReceiptItemCollection;
 // phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
 class ReceiptAdapterConcrete implements ReceiptAdapterInterface
 {
-    public function __construct($modelSaleOrder, $settings)
+    /**
+     * @param ModelSaleOrder $modelSaleOrder
+     * @param SettingsConcrete $settings
+     */
+    public function __construct($modelSaleOrder, SettingsConcrete $settings)
     {
         $this->modelSaleOrder = $modelSaleOrder;
         $this->settings = $settings;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getItems(string $orderId, int $subType): ReceiptItemCollection
     {
         $paymentMethod = (
@@ -30,26 +37,32 @@ class ReceiptAdapterConcrete implements ReceiptAdapterInterface
         $products = $this->modelSaleOrder->getOrderProducts($orderId);
         $items = new ReceiptItemCollection();
 
-        foreach ($products as $product) {
-            $item = new ReceiptItem();
-            $item
-                ->setType(ReceiptItemType::PRODUCT)
-                ->setPaymentMethod($paymentMethod)
-                ->setName($product['name'])
-                ->setPrice($product['price'])
-                ->setQuantity($product['quantity'])
-                ->setAmount($product['total'])
-                ->setVat(
-                    new Vat(
-                        $product['tax'],
-                        $this->settings->getTaxation()
-                    )
-                );
-            $items[] = $item;
+        try {
+            foreach ($products as $product) {
+                $item = new ReceiptItem();
+                $item
+                    ->setType(ReceiptItemType::PRODUCT)
+                    ->setPaymentMethod($paymentMethod)
+                    ->setName($product['name'])
+                    ->setPrice($product['price'])
+                    ->setQuantity($product['quantity'])
+                    ->setAmount($product['total'])
+                    ->setVat(
+                        new Vat(
+                            $product['tax'],
+                            $this->settings->getTaxation()
+                        )
+                    );
+                $items[] = $item;
+            }
+        } catch (Exception $e) {
+            throw new InvalidArgumentException(
+                "Заказ #$orderId, " . 'позиция ' . $product['name'] . ', ошибка: ' . $e->getMessage()
+            );
         }
 
+        // если есть платная доставка - добавляем в позиции
         $totals = $this->modelSaleOrder->getOrderTotals($orderId);
-
         foreach ($totals as $total) {
             if ($total['code'] == 'shipping' && $total['value'] > 0) {
                 $item = new ReceiptItem();
@@ -67,6 +80,9 @@ class ReceiptAdapterConcrete implements ReceiptAdapterInterface
         return $items;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getAmount(string $orderId, int $subType): Amount
     {
         $order = $this->modelSaleOrder->getOrder($orderId);
@@ -78,6 +94,9 @@ class ReceiptAdapterConcrete implements ReceiptAdapterInterface
         return $amount;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getCustomer(string $orderId): Customer
     {
         $order = $this->modelSaleOrder->getOrder($orderId);
@@ -86,6 +105,9 @@ class ReceiptAdapterConcrete implements ReceiptAdapterInterface
         return $customer;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getNotify(string $orderId): Notify
     {
         $order = $this->modelSaleOrder->getOrder($orderId);
@@ -93,9 +115,7 @@ class ReceiptAdapterConcrete implements ReceiptAdapterInterface
 
         if (!empty($order['email'])) {
             $notify->setEmail($order['email']);
-        }
-
-        if (!empty($order['telephone'])) {
+        } elseif (!empty($order['telephone'])) {
             $notify->setPhone($order['telephone']);
         }
 
@@ -106,6 +126,13 @@ class ReceiptAdapterConcrete implements ReceiptAdapterInterface
     // PRIVATE
     //######################################################################
 
+    /**
+     * @var ModelSaleOrder
+     */
     private $modelSaleOrder = null;
+
+    /**
+     * @var SettingsConcrete
+     */
     private $settings = null;
 }
