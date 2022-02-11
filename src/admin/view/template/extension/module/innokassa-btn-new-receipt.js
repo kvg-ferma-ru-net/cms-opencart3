@@ -88,6 +88,7 @@ function CreateReceipt(event, receiptType) {
             console.log(json);
 
             if (!json.success) {
+                alert(json.error);
                 return;
             }
 
@@ -110,9 +111,50 @@ function CreateReceipt(event, receiptType) {
                         .setPrice(item.price)
                         .setQuantity(item.quantity)
                         .setType(item.type)
-                        .setPaymentMethod(item.paymentMethod)
+                        .setPaymentMethod(item.payment_method)
                         .setVat(item.vat)
                 );
+            });
+
+            json.printables.forEach((printable) => {
+                builder.getPrintables().add(
+                    (new innokassa.Printable())
+                        .setLink(printable.uuid, printable.link)
+                        .setType(printable.type)
+                        .setSubType(printable.subType)
+                        .setAmount(printable.amount)
+                );
+            });
+
+            builder.setCallbackSend(() => {
+                if (builder.getReceipt().reportValidity()) {
+                    const receiptRaw = receipt.getRawObject();
+
+                    //console.log(receipt.getRawObject());
+                    //return;
+
+                    $.ajax({
+                        url: `/admin/index.php?route=extension/module/innokassa/ajaxHandFiscal&user_token=${userToken}&order_id=${orderId}`,
+                        type: 'post',
+                        data: {
+                            items: receipt.getItems().getRawArray(),
+                            notify: {
+                                email: receipt.getEmail(),
+                                phone: receipt.getPhone()
+                            },
+                            type: receipt.getType()
+                        },
+                        crossDomain: true,
+                        success: function(json) {
+                            if (json.success) {
+                                alert('Чек поставлен в очередь на фискализацию');
+                                window.location.reload();
+                            } else {
+                                alert(json.error);
+                            }
+                        }
+                    });
+                }
             });
 
             builder.render();

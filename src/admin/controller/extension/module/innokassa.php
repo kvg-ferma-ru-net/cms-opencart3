@@ -1,8 +1,28 @@
 <?php
 
+use Innokassa\MDK\Client;
+use Innokassa\MDK\Net\Transfer;
+use Innokassa\MDK\Net\ConverterApi;
+use Innokassa\MDK\Logger\LoggerFile;
+use Innokassa\MDK\Net\NetClientCurl;
+use Innokassa\MDK\Entities\Atoms\Vat;
+use Innokassa\MDK\Services\ManualBase;
+use Innokassa\MDK\Entities\ReceiptItem;
+use Innokassa\MDK\Services\PrinterBase;
+use Innokassa\MDK\Services\PipelineBase;
+use Innokassa\MDK\Storage\ReceiptFilter;
+use Innokassa\MDK\Services\AutomaticBase;
+use Innokassa\MDK\Services\ConnectorBase;
+use Innokassa\MDK\Storage\ConverterStorage;
+use Innokassa\MDK\Entities\Atoms\ReceiptType;
+use Innokassa\MDK\Entities\Primitives\Amount;
+use Innokassa\MDK\Entities\Primitives\Notify;
+use Innokassa\MDK\Collections\ReceiptItemCollection;
+
 include_once(DIR_SYSTEM . 'library/innokassa/mdk/src/autoload.php');
 include_once(DIR_SYSTEM . 'library/innokassa/SettingsConcrete.php');
 include_once(DIR_SYSTEM . 'library/innokassa/ReceiptAdapterConcrete.php');
+include_once(DIR_SYSTEM . 'library/innokassa/ReceiptStorageConcrete.php');
 
 // phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
 class ControllerExtensionModuleInnokassa extends Controller
@@ -343,28 +363,136 @@ class ControllerExtensionModuleInnokassa extends Controller
 
     //######################################################################
 
+    /**
+     * Ajax запрос на получение данных о заказе
+     * @todo сделать проверку валидности настроек
+     *
+     * @return void
+     */
     public function ajaxGetOrder()
     {
+        $this->response->addHeader('Content-Type: application/json');
+
         $idOrder = $this->request->get["order_id"];
 
         $this->load->model('sale/order');
+
+        // если заказа с таким id не существует
+        if (!$this->model_sale_order->getOrder($idOrder)) {
+            return $this->responseError("Заказ #$idOrder не найден");
+        }
 
         $conv = new \Innokassa\MDK\Storage\ConverterStorage();
 
         $this->load->model('setting/setting');
         $settings = $this->model_setting_setting->getSetting("module_innokassa");
         $adapter = new ReceiptAdapterConcrete($this->model_sale_order, new SettingsConcrete($settings));
-        $items = $adapter->getItems($idOrder, 1);
-        $notify = $adapter->getNotify($idOrder, 1);
 
-        $this->response->addHeader('Content-Type: application/json');
+        try {
+            $items = $adapter->getItems($idOrder, 1);
+            $notify = $adapter->getNotify($idOrder, 1);
+        } catch (Exception $e) {
+            return $this->responseError($e->getMessage());
+        }
+
+        try {
+            $client = $this->getClient();
+        } catch (Exception $e) {
+            return $this->responseError($e->getMessage());
+        }
+
+        $printer = $client->servicePrinter();
+        $receiptStorage = $client->componentStorage();
+        $receipts = $receiptStorage->getCollection(
+            (new ReceiptFilter())
+                ->setOrderId($idOrder)
+        );
+        $printables = [];
+        foreach ($receipts as $receipt) {
+            $printables[] = [
+                'uuid' => $receipt->getUUID()->get(),
+                'link' => $printer->getLinkRaw($receipt),
+                'type' => $receipt->getType(),
+                'subType' => $receipt->getSubType(),
+                'amount' => $receipt->getAmount()->get(Amount::CASHLESS),
+            ];
+        }
+
         $this->response->setOutput(json_encode(
             [
                 "success" => true,
                 "items" => $conv->itemsToArray($items),
-                "notify" => $conv->notifyToArray($notify)
+                "notify" => $conv->notifyToArray($notify),
+                "printables" => $printables
             ]
         ));
+    }
+
+    /**
+     * Ajax запрос на ручную фискализацию заказа
+     * @todo сделать проверку валидности настроек
+     *
+     * @return void
+     */
+    public function ajaxHandFiscal()
+    {
+        $this->response->addHeader('Content-Type: application/json');
+
+        $idOrder = $this->request->get["order_id"];
+
+        $this->load->model('sale/order');
+
+        // если заказа с таким id не существует
+        if (!$this->model_sale_order->getOrder($idOrder)) {
+            return $this->responseError("Заказ #$idOrder не найден");
+        }
+
+        $notifyArr = $this->request->post["notify"];
+        $notify = new Notify();
+        if (isset($notifyArr['email'])) {
+            $notify->setEmail($notifyArr['email']);
+        } elseif (isset($notifyArr['phone'])) {
+            $notify->setPhone($notifyArr['phone']);
+        }
+
+        $itemsArr = $this->request->post["items"];
+        $items = new ReceiptItemCollection();
+        foreach ($itemsArr as $itemArr) {
+            $item = new ReceiptItem();
+            $item
+                ->setType($itemArr['type'])
+                ->setName($itemArr['name'])
+                ->setPrice($itemArr['price'])
+                ->setQuantity($itemArr['quantity'])
+                ->setPaymentMethod($itemArr['payment_method'])
+                ->setVat(new Vat($itemArr['vat']));
+            $items[] = $item;
+        }
+
+        try {
+            $client = $this->getClient();
+        } catch (Exception $e) {
+            return $this->responseError($e->getMessage());
+        }
+
+        $manual = $client->serviceManual();
+
+        $type = $this->request->post["type"];
+        try {
+            if ($type == ReceiptType::COMING) {
+                $manual->fiscalize($idOrder, $items, $notify);
+            } elseif ($type == ReceiptType::REFUND_COMING) {
+                $manual->refund($idOrder, $items, $notify);
+            } else {
+                throw new Exception("Неверный тип чека - $type");
+            }
+        } catch (Exception $e) {
+            return $this->responseError($e->getMessage());
+        }
+
+        $this->response->setOutput(json_encode([
+            'success' => true
+        ]));
     }
 
     //######################################################################
@@ -377,4 +505,83 @@ class ControllerExtensionModuleInnokassa extends Controller
      * @var array
      */
     private $errors = [];
+
+    /**
+     * Клиент MDK
+     *
+     * @var Client
+     */
+    private $client = null;
+
+    //######################################################################
+
+    /**
+     * Отпрвка ответа с сообщением об ошибке
+     *
+     * @param string $error
+     * @return void
+     */
+    private function responseError(string $error)
+    {
+        $this->response->setOutput(json_encode(
+            [
+                "success" => false,
+                "error" => $error
+            ]
+        ));
+    }
+
+    /**
+     * Получить клиент MDK
+     *
+     * @return Client
+     */
+    private function getClient()
+    {
+        if (!$this->client) {
+            $this->load->model('sale/order');
+            $this->load->model('setting/setting');
+            $this->load->model('extension/module/innokassa');
+            $this->model_extension_module_innokassa->install();
+
+            $settings = new SettingsConcrete($this->model_setting_setting->getSetting("module_innokassa"));
+            $adapter = new ReceiptAdapterConcrete($this->model_sale_order, $settings);
+            $storage = new ReceiptStorageConcrete(
+                new ConverterStorage(),
+                $this->model_extension_module_innokassa->getDB(),
+                $this->model_extension_module_innokassa->getTableName()
+            );
+
+            $logger = new LoggerFile();
+
+            $transfer = new Transfer(
+                new NetClientCurl(),
+                new ConverterApi(),
+                $settings->getActorId(),
+                $settings->getActorToken(),
+                $settings->getCashbox(),
+                $logger
+            );
+
+            $automatic = new AutomaticBase($settings, $storage, $transfer, $adapter);
+            $manual = new ManualBase($storage, $transfer, $settings);
+            $pipeline = new PipelineBase($storage, $transfer);
+            $printer = new PrinterBase($storage, $transfer);
+            $connector = new ConnectorBase($transfer);
+
+            $this->client = new Client(
+                $settings,
+                $adapter,
+                $storage,
+                $automatic,
+                $manual,
+                $pipeline,
+                $printer,
+                $connector,
+                $logger
+            );
+        }
+
+        return $this->client;
+    }
 }
