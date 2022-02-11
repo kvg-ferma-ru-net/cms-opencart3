@@ -3,9 +3,14 @@
 // phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
 class ModelExtensionModuleInnokassa extends Model
 {
+    /**
+     * Уставнока модуля (часть модели)
+     *
+     * @return void
+     */
     public function install()
     {
-        $table = DB_PREFIX . "innokassa_receipts";
+        $table = $this->getTableName();
         $sql = "CREATE TABLE IF NOT EXISTS `$table` (
             `id` INT NOT NULL AUTO_INCREMENT,
             `uuid` VARCHAR(32) NOT NULL,
@@ -28,7 +33,32 @@ class ModelExtensionModuleInnokassa extends Model
         $this->db->query($sql);
     }
 
+    /**
+     * Удаление модуля (часть модели)
+     *
+     * @return void
+     */
     public function uninstall()
     {
+    }
+
+    /**
+     * Получить объект связи с БД
+     *
+     * @return DB
+     */
+    public function getDB()
+    {
+        return $this->db;
+    }
+
+    /**
+     * Получить название таблицы
+     *
+     * @return string
+     */
+    public function getTableName()
+    {
+        return DB_PREFIX . 'innokassa_receipts';
     }
 }
