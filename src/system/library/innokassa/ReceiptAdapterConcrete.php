@@ -2,7 +2,6 @@
 
 use Innokassa\MDK\Entities\Atoms\Vat;
 use Innokassa\MDK\Entities\ReceiptItem;
-use Innokassa\MDK\Entities\Primitives\Amount;
 use Innokassa\MDK\Entities\Primitives\Notify;
 use Innokassa\MDK\Entities\Atoms\PaymentMethod;
 use Innokassa\MDK\Entities\Primitives\Customer;
@@ -10,12 +9,13 @@ use Innokassa\MDK\Entities\Atoms\ReceiptSubType;
 use Innokassa\MDK\Entities\Atoms\ReceiptItemType;
 use Innokassa\MDK\Entities\ReceiptAdapterInterface;
 use Innokassa\MDK\Collections\ReceiptItemCollection;
+use Innokassa\MDK\Exceptions\Base\InvalidArgumentException;
 
 // phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
 class ReceiptAdapterConcrete implements ReceiptAdapterInterface
 {
     /**
-     * @param ModelSaleOrder $modelSaleOrder
+     * @param ModelSaleOrder|ModelCheckoutOrder $modelSaleOrder
      * @param SettingsConcrete $settings
      */
     public function __construct($modelSaleOrder, SettingsConcrete $settings)
@@ -83,15 +83,10 @@ class ReceiptAdapterConcrete implements ReceiptAdapterInterface
     /**
      * @inheritDoc
      */
-    public function getAmount(string $orderId, int $subType): Amount
+    public function getTotal(string $orderId): float
     {
         $order = $this->modelSaleOrder->getOrder($orderId);
-        $amount = new Amount(
-            ($subType == ReceiptSubType::PRE ? Amount::CASHLESS : Amount::PREPAYMENT),
-            $order['total']
-        );
-
-        return $amount;
+        return floatval($order['total']);
     }
 
     /**
@@ -100,7 +95,7 @@ class ReceiptAdapterConcrete implements ReceiptAdapterInterface
     public function getCustomer(string $orderId): Customer
     {
         $order = $this->modelSaleOrder->getOrder($orderId);
-        $customer = new Customer($order['customer']);
+        $customer = new Customer($order['lastname'] . ' ' . $order['firstname']);
 
         return $customer;
     }

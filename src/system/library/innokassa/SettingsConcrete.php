@@ -40,7 +40,17 @@ class SettingsConcrete implements Innokassa\MDK\Settings\SettingsInterface
 
     public function getScheme(): int
     {
-        return boolval($this->get('module_innokassa_scheme'));
+        return $this->get('module_innokassa_scheme');
+    }
+
+    public function getOrderStatus1(): int
+    {
+        return intval($this->get('module_innokassa_order_status1'));
+    }
+
+    public function getOrderStatus2(): int
+    {
+        return intval($this->get('module_innokassa_order_status2'));
     }
 
     public function getOnly2(): bool

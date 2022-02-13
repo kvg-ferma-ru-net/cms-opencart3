@@ -299,6 +299,13 @@ class ControllerExtensionModuleInnokassa extends Controller
             'admin/view/sale/order_info/after',
             'extension/module/innokassa/eventSaleOrderFormInfoAfter'
         );
+
+        // события при которых будет автоматическая фискализация
+        $this->model_setting_event->addEvent(
+            'innokassa',
+            'catalog/model/checkout/order/addOrderHistory/after',
+            'extension/module/innokassa/changeOrderStatus'
+        );
     }
 
     /**

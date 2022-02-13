@@ -27,6 +27,7 @@ services:
     volumes:
       - ./opencart/:/var/www/html/
       - ./src/admin/controller/extension/module/innokassa.php:/var/www/html/admin/controller/extension/module/innokassa.php
+      - ./src/catalog/controller/extension/module/innokassa.php:/var/www/html/catalog/controller/extension/module/innokassa.php
       - ./src/admin/language/ru-ru/extension/module/innokassa.php:/var/www/html/admin/language/ru-ru/extension/module/innokassa.php
       - ./src/admin/model/extension/module/innokassa.php:/var/www/html/admin/model/extension/module/innokassa.php
       - ./src/admin/view/template/extension/module/innokassa.twig:/var/www/html/admin/view/template/extension/module/innokassa.twig
@@ -50,6 +51,7 @@ services:
     volumes:
       - ./opencart/:/var/www/html/
       - ./src/admin/controller/extension/module/innokassa.php:/var/www/html/admin/controller/extension/module/innokassa.php
+      - ./src/catalog/controller/extension/module/innokassa.php:/var/www/html/catalog/controller/extension/module/innokassa.php
       - ./src/admin/language/ru-ru/extension/module/innokassa.php:/var/www/html/admin/language/ru-ru/extension/module/innokassa.php
       - ./src/admin/model/extension/module/innokassa.php:/var/www/html/admin/model/extension/module/innokassa.php
       - ./src/admin/view/template/extension/module/innokassa.twig:/var/www/html/admin/view/template/extension/module/innokassa.twig
