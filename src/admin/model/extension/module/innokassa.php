@@ -43,16 +43,6 @@ class ModelExtensionModuleInnokassa extends Model
     }
 
     /**
-     * Получить объект связи с БД
-     *
-     * @return DB
-     */
-    public function getDB()
-    {
-        return $this->db;
-    }
-
-    /**
      * Получить название таблицы
      *
      * @return string

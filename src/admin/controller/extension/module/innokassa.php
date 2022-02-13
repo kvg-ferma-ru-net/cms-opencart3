@@ -1,32 +1,23 @@
 <?php
 
 use Innokassa\MDK\Client;
-use Innokassa\MDK\Net\Transfer;
-use Innokassa\MDK\Net\ConverterApi;
-use Innokassa\MDK\Logger\LoggerFile;
-use Innokassa\MDK\Net\NetClientCurl;
 use Innokassa\MDK\Entities\Atoms\Vat;
-use Innokassa\MDK\Services\ManualBase;
 use Innokassa\MDK\Entities\ReceiptItem;
-use Innokassa\MDK\Services\PrinterBase;
-use Innokassa\MDK\Services\PipelineBase;
 use Innokassa\MDK\Storage\ReceiptFilter;
-use Innokassa\MDK\Services\AutomaticBase;
-use Innokassa\MDK\Services\ConnectorBase;
-use Innokassa\MDK\Storage\ConverterStorage;
 use Innokassa\MDK\Entities\Atoms\ReceiptType;
 use Innokassa\MDK\Entities\Primitives\Amount;
 use Innokassa\MDK\Entities\Primitives\Notify;
 use Innokassa\MDK\Collections\ReceiptItemCollection;
 
-include_once(DIR_SYSTEM . 'library/innokassa/mdk/src/autoload.php');
-include_once(DIR_SYSTEM . 'library/innokassa/SettingsConcrete.php');
-include_once(DIR_SYSTEM . 'library/innokassa/ReceiptAdapterConcrete.php');
-include_once(DIR_SYSTEM . 'library/innokassa/ReceiptStorageConcrete.php');
-
 // phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
 class ControllerExtensionModuleInnokassa extends Controller
 {
+    public function __construct($registry)
+    {
+        parent::__construct($registry);
+        $this->load->library('innokassa/ClientBuilder');
+    }
+
     /**
      * Генерация страницы настроек
      *
@@ -296,6 +287,8 @@ class ControllerExtensionModuleInnokassa extends Controller
         $this->model_extension_module_innokassa->install();
 
         $this->load->model('setting/event');
+
+        // события при которых будет показ кнопки фискализации
         $this->model_setting_event->addEvent(
             'innokassa',
             'admin/view/sale/order_form/after',
@@ -395,11 +388,7 @@ class ControllerExtensionModuleInnokassa extends Controller
             return $this->responseError($e->getMessage());
         }
 
-        try {
-            $client = $this->getClient();
-        } catch (Exception $e) {
-            return $this->responseError($e->getMessage());
-        }
+        $client = $this->getClient();
 
         $printer = $client->servicePrinter();
         $receiptStorage = $client->componentStorage();
@@ -469,11 +458,7 @@ class ControllerExtensionModuleInnokassa extends Controller
             $items[] = $item;
         }
 
-        try {
-            $client = $this->getClient();
-        } catch (Exception $e) {
-            return $this->responseError($e->getMessage());
-        }
+        $client = $this->getClient();
 
         $manual = $client->serviceManual();
 
@@ -506,13 +491,6 @@ class ControllerExtensionModuleInnokassa extends Controller
      */
     private $errors = [];
 
-    /**
-     * Клиент MDK
-     *
-     * @var Client
-     */
-    private $client = null;
-
     //######################################################################
 
     /**
@@ -538,50 +516,6 @@ class ControllerExtensionModuleInnokassa extends Controller
      */
     private function getClient()
     {
-        if (!$this->client) {
-            $this->load->model('sale/order');
-            $this->load->model('setting/setting');
-            $this->load->model('extension/module/innokassa');
-            $this->model_extension_module_innokassa->install();
-
-            $settings = new SettingsConcrete($this->model_setting_setting->getSetting("module_innokassa"));
-            $adapter = new ReceiptAdapterConcrete($this->model_sale_order, $settings);
-            $storage = new ReceiptStorageConcrete(
-                new ConverterStorage(),
-                $this->model_extension_module_innokassa->getDB(),
-                $this->model_extension_module_innokassa->getTableName()
-            );
-
-            $logger = new LoggerFile();
-
-            $transfer = new Transfer(
-                new NetClientCurl(),
-                new ConverterApi(),
-                $settings->getActorId(),
-                $settings->getActorToken(),
-                $settings->getCashbox(),
-                $logger
-            );
-
-            $automatic = new AutomaticBase($settings, $storage, $transfer, $adapter);
-            $manual = new ManualBase($storage, $transfer, $settings);
-            $pipeline = new PipelineBase($storage, $transfer);
-            $printer = new PrinterBase($storage, $transfer);
-            $connector = new ConnectorBase($transfer);
-
-            $this->client = new Client(
-                $settings,
-                $adapter,
-                $storage,
-                $automatic,
-                $manual,
-                $pipeline,
-                $printer,
-                $connector,
-                $logger
-            );
-        }
-
-        return $this->client;
+        return $this->ClientBuilder->getClient();
     }
 }
