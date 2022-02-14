@@ -19,7 +19,14 @@ class ControllerExtensionModuleInnokassa extends Controller
         }
     }
 
-    public function changeOrderStatus($route, $args, $output)
+    /**
+     * Обработчик события изменения статуса заказа
+     *
+     * @param string $route
+     * @param array $args
+     * @return void
+     */
+    public function changeOrderStatus($route, $args)
     {
         if (count($args) < 2) {
             return;
@@ -62,6 +69,43 @@ class ControllerExtensionModuleInnokassa extends Controller
             throw $e;
         } catch (AutomaticException $e) {
         }
+    }
+
+    //######################################################################
+
+    /**
+     * Обработка очереди чеков
+     *
+     * @return void
+     */
+    public function pipeline()
+    {
+        $secret = (isset($this->request->get["secret"]) ? $this->request->get["secret"] : null);
+
+        if (!$secret) {
+            $this->response->addHeader('HTTP/1.1 403 Forbidden');
+            $this->response->setOutput('Forbidden');
+            return;
+        }
+
+        try {
+            $client = $this->getClient();
+        } catch (Exception $e) {
+            $this->response->addHeader('HTTP/1.1 403 Forbidden');
+            return $this->response->setOutput($e->getMessage());
+        }
+
+        $settings = $client->componentSettings();
+
+        if ($secret != $settings->get('module_innokassa_pipeline_secret')) {
+            $this->response->addHeader('HTTP/1.1 403 Forbidden');
+            $this->response->setOutput('Forbidden');
+            return;
+        }
+
+        $pipeline = $client->servicePipeline();
+        $pipeline->updateAccepted();
+        $pipeline->updateUnaccepted();
     }
 
     //######################################################################

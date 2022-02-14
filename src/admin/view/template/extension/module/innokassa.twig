@@ -30,6 +30,12 @@
             <div class="panel-body">
                 <form action="{{ action }}" method="post" enctype="multipart/form-data" id="form-module" class="form-horizontal">
 
+                    <!-- Pipeline -->
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">{{ help_pipeline }}</label>
+                        <div class="col-sm-10">{{ module_innokassa_pipeline_url }}</div>
+                    </div>
+
                     <!-- Status -->
                     <div class="form-group">
                         <label class="col-sm-2 control-label" for="entry-status">{{ help_status }}</label>

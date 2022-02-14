@@ -139,6 +139,7 @@ class ControllerExtensionModuleInnokassa extends Controller
         $data['help_order_status2'] = $this->language->get('help_order_status2');
         $data['help_scheme'] = $this->language->get('help_scheme');
         $data['help_shipping_vat'] = $this->language->get('help_shipping_vat');
+        $data['help_pipeline'] = $this->language->get('help_pipeline');
 
         $data['text_scheme2'] = $this->language->get('text_scheme2');
         $data['text_scheme12'] = $this->language->get('text_scheme12');
@@ -188,6 +189,12 @@ class ControllerExtensionModuleInnokassa extends Controller
         }
 
         $data['module_innokassa_shipping_vat'] = $this->config->get('module_innokassa_shipping_vat');
+
+        $url = 'http' . ((isset($_SERVER['HTTPS']) && !empty($_SERVER['HTTPS'])) ? 's' : '') . '://'
+            . $_SERVER['HTTP_HOST']
+            . '/index.php?route=extension/module/innokassa/pipeline&secret='
+            . $this->config->get('module_innokassa_pipeline_secret');
+        $data['module_innokassa_pipeline_url'] = $url;
 
         return $data;
     }
@@ -262,7 +269,9 @@ class ControllerExtensionModuleInnokassa extends Controller
     {
         if ($this->validateSettings()) {
             $this->load->model('setting/setting');
-            $this->model_setting_setting->editSetting('module_innokassa', $this->request->post);
+            $settings = $this->request->post;
+            $settings['module_innokassa_pipeline_secret'] = $this->config->get('module_innokassa_pipeline_secret');
+            $this->model_setting_setting->editSetting('module_innokassa', $settings);
             $this->session->data['settings_success'] = $this->language->get('settings_success');
             $this->response->redirect(
                 $this->url->link(
@@ -289,6 +298,14 @@ class ControllerExtensionModuleInnokassa extends Controller
     {
         $this->load->model('extension/module/innokassa');
         $this->model_extension_module_innokassa->install();
+
+        $this->load->model('setting/setting');
+        $this->model_setting_setting->editSetting(
+            'module_innokassa',
+            [
+                'module_innokassa_pipeline_secret' => md5(time())
+            ]
+        );
 
         $this->load->model('setting/event');
 
