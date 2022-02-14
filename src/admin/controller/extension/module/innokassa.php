@@ -15,7 +15,11 @@ class ControllerExtensionModuleInnokassa extends Controller
     public function __construct($registry)
     {
         parent::__construct($registry);
-        $this->load->library('innokassa/ClientBuilder');
+
+        try {
+            $this->load->library('innokassa/ClientBuilder');
+        } catch (Exception $e) {
+        }
     }
 
     /**
@@ -373,6 +377,12 @@ class ControllerExtensionModuleInnokassa extends Controller
     {
         $this->response->addHeader('Content-Type: application/json');
 
+        try {
+            $client = $this->getClient();
+        } catch (Exception $e) {
+            return $this->responseError($e->getMessage());
+        }
+
         $idOrder = $this->request->get["order_id"];
 
         $this->load->model('sale/order');
@@ -394,8 +404,6 @@ class ControllerExtensionModuleInnokassa extends Controller
         } catch (Exception $e) {
             return $this->responseError($e->getMessage());
         }
-
-        $client = $this->getClient();
 
         $printer = $client->servicePrinter();
         $receiptStorage = $client->componentStorage();
@@ -426,13 +434,18 @@ class ControllerExtensionModuleInnokassa extends Controller
 
     /**
      * Ajax запрос на ручную фискализацию заказа
-     * @todo сделать проверку валидности настроек
      *
      * @return void
      */
     public function ajaxHandFiscal()
     {
         $this->response->addHeader('Content-Type: application/json');
+
+        try {
+            $client = $this->getClient();
+        } catch (Exception $e) {
+            return $this->responseError($e->getMessage());
+        }
 
         $idOrder = $this->request->get["order_id"];
 
@@ -464,8 +477,6 @@ class ControllerExtensionModuleInnokassa extends Controller
                 ->setVat(new Vat($itemArr['vat']));
             $items[] = $item;
         }
-
-        $client = $this->getClient();
 
         $manual = $client->serviceManual();
 
@@ -523,6 +534,9 @@ class ControllerExtensionModuleInnokassa extends Controller
      */
     private function getClient()
     {
+        if (!$this->ClientBuilder) {
+            throw new Exception('Клиент Innokassa не инициализирован, возможно не введены настройки');
+        }
         return $this->ClientBuilder->getClient();
     }
 }

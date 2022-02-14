@@ -12,7 +12,11 @@ class ControllerExtensionModuleInnokassa extends Controller
     public function __construct($registry)
     {
         parent::__construct($registry);
-        $this->load->library('innokassa/ClientBuilder');
+
+        try {
+            $this->load->library('innokassa/ClientBuilder');
+        } catch (Exception $e) {
+        }
     }
 
     public function changeOrderStatus($route, $args, $output)
@@ -24,7 +28,12 @@ class ControllerExtensionModuleInnokassa extends Controller
         $idOrder  = $args[0];
         $idStatus = $args[1];
 
-        $client = $this->getClient();
+        try {
+            $client = $this->getClient();
+        } catch (Exception $e) {
+            return;
+        }
+
         $settings = $client->componentSettings();
 
         $receiptSubType = null;
@@ -66,6 +75,9 @@ class ControllerExtensionModuleInnokassa extends Controller
      */
     private function getClient()
     {
+        if (!$this->ClientBuilder) {
+            throw new Exception('Клиент Innokassa не инициализирован, возможно не введены настройки');
+        }
         return $this->ClientBuilder->getClient();
     }
 }
