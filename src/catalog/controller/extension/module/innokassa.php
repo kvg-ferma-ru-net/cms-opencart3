@@ -49,14 +49,14 @@ class ControllerExtensionModuleInnokassa extends Controller
 
         $receiptSubType = null;
 
-        if ($settings->getScheme() == 0) {
-            if ($idStatus == $settings->getOrderStatus1()) {
+        if (!$settings->getOnly2()) {
+            if ($idStatus == $settings->get('module_innokassa_order_status1')) {
                 $receiptSubType = ReceiptSubType::PRE;
-            } elseif ($idStatus == $settings->getOrderStatus2()) {
+            } elseif ($idStatus == $settings->get('module_innokassa_order_status2')) {
                 $receiptSubType = ReceiptSubType::FULL;
             }
-        } elseif ($settings->getScheme() == 1) {
-            if ($idStatus == $settings->getOrderStatus2()) {
+        } elseif ($settings->getOnly2()) {
+            if ($idStatus == $settings->get('module_innokassa_order_status2')) {
                 $receiptSubType = ReceiptSubType::FULL;
             }
         }
