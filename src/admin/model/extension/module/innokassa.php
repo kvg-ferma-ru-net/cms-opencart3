@@ -22,7 +22,7 @@ class ModelExtensionModuleInnokassa extends Model
             `subType` TINYINT UNSIGNED NOT NULL, 
             `items` TEXT NOT NULL, 
             `taxation` TINYINT UNSIGNED NOT NULL, 
-            `amount` VARCHAR(32) NOT NULL,
+            `amount` TEXT NOT NULL,
             `notify` TEXT NOT NULL, 
             `customer` TEXT NOT NULL, 
             `location` TEXT NOT NULL, 
