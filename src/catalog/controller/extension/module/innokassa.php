@@ -28,6 +28,10 @@ class ControllerExtensionModuleInnokassa extends Controller
      */
     public function changeOrderStatus($route, $args)
     {
+        if (!$this->isEnableModule()) {
+            return;
+        }
+
         if (count($args) < 2) {
             return;
         }
@@ -80,6 +84,12 @@ class ControllerExtensionModuleInnokassa extends Controller
      */
     public function pipeline()
     {
+        if (!$this->isEnableModule()) {
+            $this->response->addHeader('HTTP/1.1 403 Forbidden');
+            $this->response->setOutput('Module Innokassa is disable');
+            return;
+        }
+
         $secret = (isset($this->request->get["secret"]) ? $this->request->get["secret"] : null);
 
         if (!$secret) {
@@ -123,5 +133,22 @@ class ControllerExtensionModuleInnokassa extends Controller
             throw new Exception('Клиент Innokassa не инициализирован, возможно не введены настройки');
         }
         return $this->ClientBuilder->getClient();
+    }
+
+    /**
+     * Включен ли модуль
+     *
+     * @return boolean
+     */
+    private function isEnableModule()
+    {
+        if (!$this->ClientBuilder) {
+            return false;
+        }
+
+        $client = $this->ClientBuilder->getClient();
+        $settings = $client->componentSettings();
+
+        return ($settings->get('module_innokassa_status') == 1);
     }
 }

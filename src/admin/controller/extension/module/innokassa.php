@@ -357,6 +357,10 @@ class ControllerExtensionModuleInnokassa extends Controller
      */
     public function eventSaleOrderFormInfoAfter(&$route, &$args, &$output)
     {
+        if (!$this->isEnableModule()) {
+            return;
+        }
+
         $script = [
             '<script src="/admin/view/template/extension/module/innokassa-btn-new-receipt.js"></script>',
             '<script src="/admin/view/template/extension/module/innokassa-rb4cms.js"></script>'
@@ -393,6 +397,10 @@ class ControllerExtensionModuleInnokassa extends Controller
     public function ajaxGetOrder()
     {
         $this->response->addHeader('Content-Type: application/json');
+
+        if (!$this->isEnableModule()) {
+            return $this->responseError('Модуль Innokassa выключен');
+        }
 
         try {
             $client = $this->getClient();
@@ -458,6 +466,10 @@ class ControllerExtensionModuleInnokassa extends Controller
     public function ajaxHandFiscal()
     {
         $this->response->addHeader('Content-Type: application/json');
+
+        if (!$this->isEnableModule()) {
+            return $this->responseError('Модуль Innokassa выключен');
+        }
 
         try {
             $client = $this->getClient();
@@ -562,5 +574,22 @@ class ControllerExtensionModuleInnokassa extends Controller
             throw new Exception('Клиент Innokassa не инициализирован, возможно не введены настройки');
         }
         return $this->ClientBuilder->getClient();
+    }
+
+    /**
+     * Включен ли модуль
+     *
+     * @return boolean
+     */
+    private function isEnableModule()
+    {
+        if (!$this->ClientBuilder) {
+            return false;
+        }
+
+        $client = $this->ClientBuilder->getClient();
+        $settings = $client->componentSettings();
+
+        return ($settings->get('module_innokassa_status') == 1);
     }
 }
