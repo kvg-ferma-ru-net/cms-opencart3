@@ -431,11 +431,12 @@ class ControllerExtensionModuleInnokassa extends Controller
         $printables = [];
         foreach ($receipts as $receipt) {
             $printables[] = [
-                'uuid' => $receipt->getUUID()->get(),
+                'uuid' => substr($receipt->getUUID()->get(), 0, 12),
                 'link' => $printer->getLinkRaw($receipt),
+                'status' => $receipt->getStatus()->getCode(),
                 'type' => $receipt->getType(),
                 'subType' => $receipt->getSubType(),
-                'amount' => $receipt->getAmount()->get(Amount::CASHLESS),
+                'amount' => $receipt->getAmount()->get(Amount::CASHLESS) + $receipt->getAmount()->get(Amount::CASH),
             ];
         }
 
@@ -495,14 +496,20 @@ class ControllerExtensionModuleInnokassa extends Controller
             $items[] = $item;
         }
 
+        $amountArr = $this->request->post["amount"];
+        $amount = new Amount();
+        foreach ($amountArr as $key => $value) {
+            $amount->set($key, $value);
+        }
+
         $manual = $client->serviceManual();
 
         $type = $this->request->post["type"];
         try {
             if ($type == ReceiptType::COMING) {
-                $manual->fiscalize($idOrder, $items, $notify);
+                $manual->fiscalize($idOrder, $items, $notify, $amount);
             } elseif ($type == ReceiptType::REFUND_COMING) {
-                $manual->refund($idOrder, $items, $notify);
+                $manual->refund($idOrder, $items, $notify, $amount);
             } else {
                 throw new Exception("Неверный тип чека - $type");
             }

@@ -101,8 +101,16 @@ function CreateReceipt(event, receiptType) {
 
             let receipt = builder.getReceipt();
             receipt.setOrderId(orderId);
-            receipt.setEmail(json.notify.email);
-            receipt.setPhone(json.notify.phone);
+
+            let notify = receipt.getNotify();
+
+            if (json.notify.email) {
+                notify.setEmail(json.notify.email);
+            }
+
+            if (json.notify.phone) {
+                notify.setPhone(json.notify.phone);
+            }
 
             json.items.forEach((item) => {
                 receipt.getItems().add(
@@ -120,6 +128,7 @@ function CreateReceipt(event, receiptType) {
                 builder.getPrintables().add(
                     (new innokassa.Printable())
                         .setLink(printable.uuid, printable.link)
+                        .setStatus(printable.status)
                         .setType(printable.type)
                         .setSubType(printable.subType)
                         .setAmount(printable.amount)
@@ -136,14 +145,7 @@ function CreateReceipt(event, receiptType) {
                     $.ajax({
                         url: `/admin/index.php?route=extension/module/innokassa/ajaxHandFiscal&user_token=${userToken}&order_id=${orderId}`,
                         type: 'post',
-                        data: {
-                            items: receipt.getItems().getRawArray(),
-                            notify: {
-                                email: receipt.getEmail(),
-                                phone: receipt.getPhone()
-                            },
-                            type: receipt.getType()
-                        },
+                        data: receiptRaw,
                         crossDomain: true,
                         success: function(json) {
                             if (json.success) {
@@ -155,6 +157,10 @@ function CreateReceipt(event, receiptType) {
                         }
                     });
                 }
+            });
+
+            builder.setCallbackClose(() => {
+                $("#receipt-builder-window").modal("hide");
             });
 
             builder.render();
