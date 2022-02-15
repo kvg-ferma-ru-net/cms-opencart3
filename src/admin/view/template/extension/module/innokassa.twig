@@ -88,7 +88,7 @@
                         <div class="col-sm-10">
                             <input type="text" name="module_innokassa_cashbox"
                                    value="{{ module_innokassa_cashbox }}"
-                                   placeholder="{{ entry_actor_token }}"
+                                   placeholder="{{ help_cashbox }}"
                                    autocomplete="off"
                                    id="cashbox" class="form-control"/>
                         </div>
@@ -133,6 +133,20 @@
                                    placeholder="{{ entry_location }}"
                                    autocomplete="off"
                                    id="location" class="form-control"/>
+                        </div>
+                    </div>
+
+                    <!-- Item type -->
+                    <div class="form-group required">
+                        <label class="col-sm-2 control-label" for="entry-item-type">
+                            {{ help_item_type }}
+                        </label>
+                        <div class="col-sm-10">
+                            <select name="module_innokassa_item_type" id="entry-item-type" class="form-control">
+                                {% for i,v in item_types %}
+                                    <option value="{{ i }}" {% if module_innokassa_item_type == i %}selected{% endif %}>{{ v }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
                     </div>
 

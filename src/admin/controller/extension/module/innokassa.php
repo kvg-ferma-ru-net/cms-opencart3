@@ -8,6 +8,7 @@ use Innokassa\MDK\Entities\Atoms\ReceiptType;
 use Innokassa\MDK\Entities\Primitives\Amount;
 use Innokassa\MDK\Entities\Primitives\Notify;
 use Innokassa\MDK\Collections\ReceiptItemCollection;
+use Innokassa\MDK\Entities\Atoms\ReceiptItemType;
 
 // phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
 class ControllerExtensionModuleInnokassa extends Controller
@@ -188,6 +189,16 @@ class ControllerExtensionModuleInnokassa extends Controller
             $data['vats'][$vat->getCode()] = $vat->getName();
         }
 
+        $data['item_types'] = [];
+        $receiptItemTypes = [];
+        $receiptItemTypes[] = new ReceiptItemType(ReceiptItemType::PRODUCT);
+        $receiptItemTypes[] = new ReceiptItemType(ReceiptItemType::WORK);
+        $receiptItemTypes[] = new ReceiptItemType(ReceiptItemType::SERVICE);
+        $receiptItemTypes[] = new ReceiptItemType(ReceiptItemType::PAYMENT);
+        foreach ($receiptItemTypes as $receiptItenType) {
+            $data['item_types'][$receiptItenType->getCode()] = $receiptItenType->getName();
+        }
+
         $data['module_innokassa_shipping_vat'] = $this->config->get('module_innokassa_shipping_vat');
 
         $url = 'http' . ((isset($_SERVER['HTTPS']) && !empty($_SERVER['HTTPS'])) ? 's' : '') . '://'
@@ -303,7 +314,8 @@ class ControllerExtensionModuleInnokassa extends Controller
         $this->model_setting_setting->editSetting(
             'module_innokassa',
             [
-                'module_innokassa_pipeline_secret' => md5(time())
+                'module_innokassa_pipeline_secret' => md5(time()),
+                'module_innokassa_item_type' => ReceiptItemType::PRODUCT
             ]
         );
 
@@ -420,8 +432,8 @@ class ControllerExtensionModuleInnokassa extends Controller
         $conv = new \Innokassa\MDK\Storage\ConverterStorage();
 
         $this->load->model('setting/setting');
-        $settings = $this->model_setting_setting->getSetting("module_innokassa");
-        $adapter = new ReceiptAdapterConcrete($this->model_sale_order, new SettingsConcrete($settings));
+        $settings = $client->componentSettings();
+        $adapter = new ReceiptAdapterConcrete($this->model_sale_order, $settings);
 
         try {
             $items = $adapter->getItems($idOrder, 1);

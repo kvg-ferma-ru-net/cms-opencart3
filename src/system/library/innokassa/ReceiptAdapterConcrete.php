@@ -41,7 +41,7 @@ class ReceiptAdapterConcrete implements ReceiptAdapterInterface
             foreach ($products as $product) {
                 $item = new ReceiptItem();
                 $item
-                    ->setType(ReceiptItemType::PRODUCT)
+                    ->setType($this->settings->get('module_innokassa_item_type'))
                     ->setPaymentMethod($paymentMethod)
                     ->setName($product['name'])
                     ->setPrice($product['price'])
