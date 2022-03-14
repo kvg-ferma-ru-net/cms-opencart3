@@ -1,6 +1,6 @@
 {
-    "name": "innokassa/shopscript-module",
-    "description": "Shop-Script module fiscalization by Innokassa",
+    "name": "innokassa/opencart3-module",
+    "description": "OpenCart3 module fiscalization by Innokassa",
     "version": "2.0.0",
     "type": "library",
     "license": "MIT",
