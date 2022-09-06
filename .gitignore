@@ -3,3 +3,5 @@ opencart/
 docker-data/
 vendor/
 innokassa.ocmod.zip
+xdebug.log
+logs/
