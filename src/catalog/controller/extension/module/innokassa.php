@@ -5,6 +5,7 @@ use Innokassa\MDK\Exceptions\TransferException;
 use Innokassa\MDK\Entities\Atoms\ReceiptSubType;
 use Innokassa\MDK\Exceptions\Services\AutomaticException;
 use Innokassa\MDK\Exceptions\Base\InvalidArgumentException;
+use Innokassa\MDK\Settings\SettingsAbstract;
 
 // phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
 class ControllerExtensionModuleInnokassa extends Controller
@@ -49,13 +50,13 @@ class ControllerExtensionModuleInnokassa extends Controller
 
         $receiptSubType = null;
 
-        if (!$settings->getOnly2()) {
+        if ($settings->getScheme() == SettingsAbstract::SCHEME_PRE_FULL) {
             if ($idStatus == $settings->get('module_innokassa_order_status1')) {
                 $receiptSubType = ReceiptSubType::PRE;
             } elseif ($idStatus == $settings->get('module_innokassa_order_status2')) {
                 $receiptSubType = ReceiptSubType::FULL;
             }
-        } elseif ($settings->getOnly2()) {
+        } elseif ($settings->getScheme() == SettingsAbstract::SCHEME_ONLY_FULL) {
             if ($idStatus == $settings->get('module_innokassa_order_status2')) {
                 $receiptSubType = ReceiptSubType::FULL;
             }
@@ -68,10 +69,12 @@ class ControllerExtensionModuleInnokassa extends Controller
         $automatic = $client->serviceAutomatic();
 
         try {
-            $automatic->fiscalize($idOrder, $receiptSubType);
+            $automatic->fiscalize($idOrder, '1', $receiptSubType);
+        } catch (AutomaticException $e) {
         } catch (InvalidArgumentException | TransferException | StorageException $e) {
             throw $e;
-        } catch (AutomaticException $e) {
+        } catch (Exception $e) {
+            throw $e;
         }
     }
 
@@ -114,8 +117,8 @@ class ControllerExtensionModuleInnokassa extends Controller
         }
 
         $pipeline = $client->servicePipeline();
-        $pipeline->updateAccepted();
-        $pipeline->updateUnaccepted();
+        $pipeline->update($_SERVER['DOCUMENT_ROOT'] . '.pipeline');
+        $pipeline->monitoring($_SERVER['DOCUMENT_ROOT'] . 'innokassa.monitoring', 'start_time');
     }
 
     //######################################################################

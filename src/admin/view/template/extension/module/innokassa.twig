@@ -122,6 +122,20 @@
                         </div>
                     </div>
 
+                    <!-- Item vat -->
+                    <div class="form-group required">
+                        <label class="col-sm-2 control-label" for="entry-item-vat">
+                            {{ help_item_vat }}
+                        </label>
+                        <div class="col-sm-10">
+                            <select name="module_innokassa_item_vat" id="entry-item-vat" class="form-control">
+                                {% for i,v in vats %}
+                                    <option value="{{ i }}" {% if module_innokassa_item_vat == i %}selected{% endif %}>{{ v }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
                     <!-- Location -->
                     <div class="form-group required">
                         <label class="col-sm-2 control-label" for="location">

@@ -1,13 +1,6 @@
 <?php
 
 use Innokassa\MDK\Client;
-use Innokassa\MDK\Entities\Atoms\Vat;
-use Innokassa\MDK\Entities\ReceiptItem;
-use Innokassa\MDK\Storage\ReceiptFilter;
-use Innokassa\MDK\Entities\Atoms\ReceiptType;
-use Innokassa\MDK\Entities\Primitives\Amount;
-use Innokassa\MDK\Entities\Primitives\Notify;
-use Innokassa\MDK\Collections\ReceiptItemCollection;
 use Innokassa\MDK\Entities\Atoms\ReceiptItemType;
 
 // phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
@@ -41,7 +34,7 @@ class ControllerExtensionModuleInnokassa extends Controller
         $data = array_merge(
             $this->getTemplateData(),
             $this->getFormData(),
-            $this->getSettingsLang(),
+            //$this->getSettingsLang(),
             $this->getSettingsData(),
             $this->getStatusData()
         );
@@ -122,7 +115,7 @@ class ControllerExtensionModuleInnokassa extends Controller
      *
      * @return array
      */
-    public function getSettingsLang()
+    /*public function getSettingsLang()
     {
         $data = [];
         $data['entry_actor_id'] = $this->language->get('entry_actor_id');
@@ -146,7 +139,7 @@ class ControllerExtensionModuleInnokassa extends Controller
         $data['text_scheme12'] = $this->language->get('text_scheme12');
 
         return $data;
-    }
+    }*/
 
     /**
      * Получить данные настроек
@@ -254,9 +247,6 @@ class ControllerExtensionModuleInnokassa extends Controller
             $transfer = new Innokassa\MDK\Net\Transfer(
                 new Innokassa\MDK\Net\NetClientCurl(),
                 new Innokassa\MDK\Net\ConverterApi(),
-                $settings['module_innokassa_actor_id'],
-                $settings['module_innokassa_actor_token'],
-                $settings['module_innokassa_cashbox'],
                 new Innokassa\MDK\Logger\LoggerFile()
             );
             $conn = new Innokassa\MDK\Services\ConnectorBase($transfer);
@@ -321,7 +311,7 @@ class ControllerExtensionModuleInnokassa extends Controller
 
         $this->load->model('setting/event');
 
-        // события при которых будет показ кнопки фискализации
+        // события при которых будет показ кнопки перехода в CRM
         $this->model_setting_event->addEvent(
             'innokassa',
             'admin/view/sale/order_form/after',
@@ -359,7 +349,7 @@ class ControllerExtensionModuleInnokassa extends Controller
 
     /**
      * Обработчик событий:
-     *  - admin/view/sale/order_form/afte
+     *  - admin/view/sale/order_form/after
      *  - admin/view/sale/order_info/after
      *
      * @param string $route
@@ -373,177 +363,10 @@ class ControllerExtensionModuleInnokassa extends Controller
             return;
         }
 
-        $script = [
-            '<script src="/admin/view/template/extension/module/innokassa-btn-new-receipt.js"></script>',
-            '<script src="/admin/view/template/extension/module/innokassa-rb4cms.js"></script>'
-        ];
+        $script = '<script src="/admin/view/template/extension/module/innokassa-btn.js"></script>';
         $needle = '</div>';
         $pos = strripos($output, $needle) + strlen($needle);
-        $output = substr($output, 0, $pos) . implode('', $script) . substr($output, $pos);
-
-        $modal = '<div id="receipt-builder-window" class="modal"> \
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-                        <h4 class="modal-title"></h4>
-                    </div>
-                    <div class="modal-body">
-                    </div>
-                </div>
-            </div>
-        </div>';
-        $needle = '</body>';
-        $pos = strripos($output, $needle);
-        $output = substr($output, 0, $pos) . $modal . substr($output, $pos);
-    }
-
-    //######################################################################
-
-    /**
-     * Ajax запрос на получение данных о заказе
-     * @todo сделать проверку валидности настроек
-     *
-     * @return void
-     */
-    public function ajaxGetOrder()
-    {
-        $this->response->addHeader('Content-Type: application/json');
-
-        if (!$this->isEnableModule()) {
-            return $this->responseError('Модуль Innokassa выключен');
-        }
-
-        try {
-            $client = $this->getClient();
-        } catch (Exception $e) {
-            return $this->responseError($e->getMessage());
-        }
-
-        $idOrder = $this->request->get["order_id"];
-
-        $this->load->model('sale/order');
-
-        // если заказа с таким id не существует
-        if (!$this->model_sale_order->getOrder($idOrder)) {
-            return $this->responseError("Заказ #$idOrder не найден");
-        }
-
-        $conv = new \Innokassa\MDK\Storage\ConverterStorage();
-
-        $this->load->model('setting/setting');
-        $settings = $client->componentSettings();
-        $adapter = new ReceiptAdapterConcrete($this->model_sale_order, $settings);
-
-        try {
-            $items = $adapter->getItems($idOrder, 1);
-            $notify = $adapter->getNotify($idOrder, 1);
-        } catch (Exception $e) {
-            return $this->responseError($e->getMessage());
-        }
-
-        $printer = $client->servicePrinter();
-        $receiptStorage = $client->componentStorage();
-        $receipts = $receiptStorage->getCollection(
-            (new ReceiptFilter())
-                ->setOrderId($idOrder)
-        );
-        $printables = [];
-        foreach ($receipts as $receipt) {
-            $printables[] = [
-                'uuid' => substr($receipt->getUUID()->get(), 0, 12),
-                'link' => $printer->getLinkRaw($receipt),
-                'status' => $receipt->getStatus()->getCode(),
-                'type' => $receipt->getType(),
-                'subType' => $receipt->getSubType(),
-                'amount' => $receipt->getAmount()->get(Amount::CASHLESS) + $receipt->getAmount()->get(Amount::CASH),
-            ];
-        }
-
-        $this->response->setOutput(json_encode(
-            [
-                "success" => true,
-                "items" => $conv->itemsToArray($items),
-                "notify" => $conv->notifyToArray($notify),
-                "printables" => $printables
-            ]
-        ));
-    }
-
-    /**
-     * Ajax запрос на ручную фискализацию заказа
-     *
-     * @return void
-     */
-    public function ajaxHandFiscal()
-    {
-        $this->response->addHeader('Content-Type: application/json');
-
-        if (!$this->isEnableModule()) {
-            return $this->responseError('Модуль Innokassa выключен');
-        }
-
-        try {
-            $client = $this->getClient();
-        } catch (Exception $e) {
-            return $this->responseError($e->getMessage());
-        }
-
-        $idOrder = $this->request->get["order_id"];
-
-        $this->load->model('sale/order');
-
-        // если заказа с таким id не существует
-        if (!$this->model_sale_order->getOrder($idOrder)) {
-            return $this->responseError("Заказ #$idOrder не найден");
-        }
-
-        $notifyArr = $this->request->post["notify"];
-        $notify = new Notify();
-        if (isset($notifyArr['email'])) {
-            $notify->setEmail($notifyArr['email']);
-        } elseif (isset($notifyArr['phone'])) {
-            $notify->setPhone($notifyArr['phone']);
-        }
-
-        $itemsArr = $this->request->post["items"];
-        $items = new ReceiptItemCollection();
-        foreach ($itemsArr as $itemArr) {
-            $item = new ReceiptItem();
-            $item
-                ->setType($itemArr['type'])
-                ->setName($itemArr['name'])
-                ->setPrice($itemArr['price'])
-                ->setQuantity($itemArr['quantity'])
-                ->setPaymentMethod($itemArr['payment_method'])
-                ->setVat(new Vat($itemArr['vat']));
-            $items[] = $item;
-        }
-
-        $amountArr = $this->request->post["amount"];
-        $amount = new Amount();
-        foreach ($amountArr as $key => $value) {
-            $amount->set($key, $value);
-        }
-
-        $manual = $client->serviceManual();
-
-        $type = $this->request->post["type"];
-        try {
-            if ($type == ReceiptType::COMING) {
-                $manual->fiscalize($idOrder, $items, $notify, $amount);
-            } elseif ($type == ReceiptType::REFUND_COMING) {
-                $manual->refund($idOrder, $items, $notify, $amount);
-            } else {
-                throw new Exception("Неверный тип чека - $type");
-            }
-        } catch (Exception $e) {
-            return $this->responseError($e->getMessage());
-        }
-
-        $this->response->setOutput(json_encode([
-            'success' => true
-        ]));
+        $output = substr($output, 0, $pos) . $script . substr($output, $pos);
     }
 
     //######################################################################
@@ -558,35 +381,6 @@ class ControllerExtensionModuleInnokassa extends Controller
     private $errors = [];
 
     //######################################################################
-
-    /**
-     * Отпрвка ответа с сообщением об ошибке
-     *
-     * @param string $error
-     * @return void
-     */
-    private function responseError(string $error)
-    {
-        $this->response->setOutput(json_encode(
-            [
-                "success" => false,
-                "error" => $error
-            ]
-        ));
-    }
-
-    /**
-     * Получить клиент MDK
-     *
-     * @return Client
-     */
-    private function getClient()
-    {
-        if (!$this->ClientBuilder) {
-            throw new Exception('Клиент Innokassa не инициализирован, возможно не введены настройки');
-        }
-        return $this->ClientBuilder->getClient();
-    }
 
     /**
      * Включен ли модуль

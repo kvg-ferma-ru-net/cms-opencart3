@@ -6,13 +6,13 @@ services:
     image: mysql:5.7
     container_name: oc3-db-dev
     restart: unless-stopped
+    ports:
+      - "52004:3306"
     volumes:
       - oc3-module:/var/lib/mysql
       - ./.docker/mysql/init.sql:/usr/bin/init.sql
       - ./.docker/mysql/entrypoint.sh:/usr/bin/entrypoint.sh
     command: /bin/bash -c "/usr/bin/entrypoint.sh"
-    networks:
-      - app-network
 
   backend:
     image: registry.git.innokassa.ru/byurrer/docker-images/php7.1-fpm:dev
@@ -30,8 +30,7 @@ services:
       - ./src/admin/language/ru-ru/extension/module/innokassa.php:/var/www/html/admin/language/ru-ru/extension/module/innokassa.php
       - ./src/admin/model/extension/module/innokassa.php:/var/www/html/admin/model/extension/module/innokassa.php
       - ./src/admin/view/template/extension/module/innokassa.twig:/var/www/html/admin/view/template/extension/module/innokassa.twig
-      - ./src/admin/view/template/extension/module/innokassa-btn-new-receipt.js:/var/www/html/admin/view/template/extension/module/innokassa-btn-new-receipt.js
-      - ./src/admin/view/template/extension/module/innokassa-rb4cms.js:/var/www/html/admin/view/template/extension/module/innokassa-rb4cms.js
+      - ./src/admin/view/template/extension/module/innokassa-btn.js:/var/www/html/admin/view/template/extension/module/innokassa-btn.js
       - ./src/system/library/innokassa/:/var/www/html/system/library/innokassa/
     networks:
       - app-network
@@ -51,8 +50,7 @@ services:
       - ./src/admin/language/ru-ru/extension/module/innokassa.php:/var/www/html/admin/language/ru-ru/extension/module/innokassa.php
       - ./src/admin/model/extension/module/innokassa.php:/var/www/html/admin/model/extension/module/innokassa.php
       - ./src/admin/view/template/extension/module/innokassa.twig:/var/www/html/admin/view/template/extension/module/innokassa.twig
-      - ./src/admin/view/template/extension/module/innokassa-btn-new-receipt.js:/var/www/html/admin/view/template/extension/module/innokassa-btn-new-receipt.js
-      - ./src/admin/view/template/extension/module/innokassa-rb4cms.js:/var/www/html/admin/view/template/extension/module/innokassa-rb4cms.js
+      - ./src/admin/view/template/extension/module/innokassa-btn.js:/var/www/html/admin/view/template/extension/module/innokassa-btn.js
       - ./src/system/library/innokassa/:/var/www/html/system/library/innokassa/
     networks:
       app-network:

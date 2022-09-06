@@ -1,64 +1,74 @@
 <?php
 
 // phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
-class SettingsConcrete implements Innokassa\MDK\Settings\SettingsInterface
+class SettingsConcrete extends Innokassa\MDK\Settings\SettingsAbstract
 {
     public function __construct(array $settings)
     {
         $this->settings = $settings;
     }
 
-    public function getActorId(): string
+    public function getActorId(string $siteId = ''): string
     {
-        return intval($this->get('module_innokassa_actor_id'));
+        return $this->get('module_innokassa_actor_id');
     }
 
-    public function getActorToken(): string
+    public function getActorToken(string $siteId = ''): string
     {
         return $this->get('module_innokassa_actor_token');
     }
 
-    public function getCashbox(): string
+    public function getCashbox(string $siteId = ''): string
     {
-        return intval($this->get('module_innokassa_cashbox'));
+        return $this->get('module_innokassa_cashbox');
     }
 
-    public function getLocation(): string
+    public function getLocation(string $siteId = ''): string
     {
         return $this->get('module_innokassa_location');
     }
 
-    public function getTaxation(): int
+    public function getTaxation(string $siteId = ''): int
     {
         return intval($this->get('module_innokassa_taxation'));
     }
 
-    public function getShippingVat(): int
+    public function getShippingVat(string $siteId = ''): int
     {
         return intval($this->get('module_innokassa_shipping_vat'));
     }
 
-    public function getScheme(): int
+    public function getScheme(string $siteId = ''): int
     {
-        return $this->get('module_innokassa_scheme');
+        return intval($this->get('module_innokassa_scheme'));
     }
 
-    public function getOrderStatus1(): int
+    public function getOrderStatusReceiptPre(string $siteId = ''): string
     {
-        return intval($this->get('module_innokassa_order_status1'));
+        return $this->get('module_innokassa_order_status1');
     }
 
-    public function getOrderStatus2(): int
+    public function getOrderStatusReceiptFull(string $siteId = ''): string
     {
-        return intval($this->get('module_innokassa_order_status2'));
+        return $this->get('module_innokassa_order_status2');
     }
 
-    public function getOnly2(): bool
+    public function getVatShipping(string $siteId = ''): int
     {
-        return $this->getScheme() == 1;
+        return intval($this->get('module_innokassa_shipping_vat'));
     }
 
-    public function get(string $name)
+    public function getVatDefaultItems(string $siteId = ''): int
+    {
+        return intval($this->get('module_innokassa_item_vat'));
+    }
+
+    public function getTypeDefaultItems(string $siteId = ''): int
+    {
+        return intval($this->get('module_innokassa_item_type'));
+    }
+
+    public function get(string $name, string $siteId = '')
     {
         if (isset($this->settings[$name]) && strlen($this->settings[$name]) > 0) {
             return $this->settings[$name];

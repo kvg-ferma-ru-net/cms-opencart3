@@ -20,6 +20,7 @@ $_['help_order_status2'] = 'Статус заказа для второго че
 $_['help_status'] = 'Статус модуля';
 $_['help_scheme'] = 'Схема фискализации';
 $_['help_shipping_vat'] = 'НДС доставки';
+$_['help_item_vat'] = 'НДС позиций';
 $_['help_pipeline'] = 'Ссылка для cron';
 $_['help_item_type'] = 'Предмет расчёта по умолчанию';
 
