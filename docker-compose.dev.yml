@@ -41,6 +41,8 @@ services:
     restart: unless-stopped
     depends_on: 
       - backend
+    ports:
+      - "5021:80"
     volumes:
       - ./.docker/webserver/host.conf:/etc/apache2/sites-available/000-default.conf
       - ./logs/:/var/www/html/logs/
