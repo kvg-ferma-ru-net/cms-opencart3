@@ -60,7 +60,9 @@ class SettingsConcrete extends Innokassa\MDK\Settings\SettingsAbstract
 
     public function getVatDefaultItems(string $siteId = ''): int
     {
-        return intval($this->get('module_innokassa_item_vat'));
+        $name = 'module_innokassa_item_vat';
+        throw new Innokassa\MDK\Exceptions\SettingsException("Настройка '$name' не используется");
+        return 0;
     }
 
     public function getTypeDefaultItems(string $siteId = ''): int
