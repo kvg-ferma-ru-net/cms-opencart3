@@ -82,7 +82,7 @@ class ReceiptStorageConcrete implements ReceiptStorageInterface
     {
         $where = $this->where($filter);
         $sql = "SELECT MIN($column) FROM `{$this->table}` WHERE $where";
-        $result = $this->db->query($sql, true)[0];
+        $result = $this->db->query($sql, true)->row;
         return current($result);
     }
 
@@ -90,7 +90,7 @@ class ReceiptStorageConcrete implements ReceiptStorageInterface
     {
         $where = $this->where($filter);
         $sql = "SELECT MAX($column) FROM `{$this->table}` WHERE $where";
-        $result = $this->db->query($sql, true)[0];
+        $result = $this->db->query($sql, true)->row;
         return current($result);
     }
 
@@ -98,7 +98,8 @@ class ReceiptStorageConcrete implements ReceiptStorageInterface
     {
         $where = $this->where($filter);
         $sql = "SELECT COUNT(*) FROM `{$this->table}` WHERE $where";
-        $result = $this->db->query($sql, true)[0];
+        $res = $this->db->query($sql, true);
+        $result = $this->db->query($sql, true)->row;
         return current($result);
     }
 

@@ -133,7 +133,7 @@ class ControllerExtensionModuleInnokassa extends Controller
 
         $pipeline = $client->servicePipeline();
         $pipeline->update($_SERVER['DOCUMENT_ROOT'] . '/.pipeline');
-        $pipeline->monitoring($_SERVER['DOCUMENT_ROOT'] . '/innokassa.monitoring', 'start_time');
+        //$pipeline->monitoring($_SERVER['DOCUMENT_ROOT'] . '/innokassa.monitoring', 'start_time');
     }
 
     //######################################################################
