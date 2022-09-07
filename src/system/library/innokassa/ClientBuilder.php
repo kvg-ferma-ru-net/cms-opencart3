@@ -51,7 +51,7 @@ class ClientBuilder
             $this->getTableName()
         );
 
-        $logger = new LoggerFile();
+        $logger = new LoggerFile($_SERVER['DOCUMENT_ROOT'] . '/innokassa/logs');
 
         $transfer = new Transfer(
             new NetClientCurl(),
