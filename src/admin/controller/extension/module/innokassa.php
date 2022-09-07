@@ -1,6 +1,7 @@
 <?php
 
 use Innokassa\MDK\Client;
+use Innokassa\MDK\Entities\Atoms\Vat;
 use Innokassa\MDK\Entities\Atoms\ReceiptItemType;
 
 // phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
@@ -177,7 +178,12 @@ class ControllerExtensionModuleInnokassa extends Controller
         }
 
         $data['vats'] = [];
-        $vats = Innokassa\MDK\Entities\Atoms\Vat::all();
+        $vats = [
+            new Vat(Vat::CODE_20),
+            new Vat(Vat::CODE_10),
+            new Vat(Vat::CODE_0),
+            new Vat(Vat::CODE_WITHOUT)
+        ];
         foreach ($vats as $vat) {
             $data['vats'][$vat->getCode()] = $vat->getName();
         }
