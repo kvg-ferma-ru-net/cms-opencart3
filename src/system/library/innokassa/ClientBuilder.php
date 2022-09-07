@@ -51,12 +51,9 @@ class ClientBuilder
             $this->getTableName()
         );
 
-        $logger = new LoggerFile($_SERVER['DOCUMENT_ROOT'] . '/innokassa/logs');
-
         $transfer = new Transfer(
             new NetClientCurl(),
-            new ConverterApi(),
-            $logger
+            new ConverterApi()
         );
 
         $automatic = new AutomaticBase($settings, $storage, $transfer, $adapter, $receiptIdFactory);
@@ -68,8 +65,7 @@ class ClientBuilder
             $storage,
             $automatic,
             $pipeline,
-            $connector,
-            $logger
+            $connector
         );
     }
 

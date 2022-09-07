@@ -1,11 +1,13 @@
 <?php
 
+use Innokassa\MDK\Entities\Receipt;
+use Innokassa\MDK\Services\AutomaticBase;
+use Innokassa\MDK\Settings\SettingsAbstract;
 use Innokassa\MDK\Exceptions\StorageException;
 use Innokassa\MDK\Exceptions\TransferException;
 use Innokassa\MDK\Entities\Atoms\ReceiptSubType;
 use Innokassa\MDK\Exceptions\Services\AutomaticException;
 use Innokassa\MDK\Exceptions\Base\InvalidArgumentException;
-use Innokassa\MDK\Settings\SettingsAbstract;
 
 // phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
 class ControllerExtensionModuleInnokassa extends Controller
@@ -66,14 +68,27 @@ class ControllerExtensionModuleInnokassa extends Controller
             return;
         }
 
+        /** @var AutomaticBase */
         $automatic = $client->serviceAutomatic();
 
         try {
             $automatic->fiscalize($idOrder, '1', $receiptSubType);
         } catch (AutomaticException $e) {
         } catch (InvalidArgumentException | TransferException | StorageException $e) {
+            $this->log->write(sprintf(
+                'Exception fiscalization order %d receipt sub type %s, detail: %s',
+                $idOrder,
+                $receiptSubType,
+                $e->__toString()
+            ));
             throw $e;
         } catch (Exception $e) {
+            $this->log->write(sprintf(
+                'Exception fiscalization order %d receipt sub type %s, detail: %s',
+                $idOrder,
+                $receiptSubType,
+                $e->__toString()
+            ));
             throw $e;
         }
     }
@@ -117,8 +132,8 @@ class ControllerExtensionModuleInnokassa extends Controller
         }
 
         $pipeline = $client->servicePipeline();
-        $pipeline->update($_SERVER['DOCUMENT_ROOT'] . '.pipeline');
-        $pipeline->monitoring($_SERVER['DOCUMENT_ROOT'] . 'innokassa.monitoring', 'start_time');
+        $pipeline->update($_SERVER['DOCUMENT_ROOT'] . '/.pipeline');
+        $pipeline->monitoring($_SERVER['DOCUMENT_ROOT'] . '/innokassa.monitoring', 'start_time');
     }
 
     //######################################################################
