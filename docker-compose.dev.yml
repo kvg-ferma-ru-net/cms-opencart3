@@ -13,6 +13,8 @@ services:
       - ./.docker/mysql/init.sql:/usr/bin/init.sql
       - ./.docker/mysql/entrypoint.sh:/usr/bin/entrypoint.sh
     command: /bin/bash -c "/usr/bin/entrypoint.sh"
+    networks:
+      - app-network
 
   backend:
     image: registry.git.innokassa.ru/byurrer/docker-images/php7.1-fpm:dev
