@@ -5,7 +5,6 @@ namespace Innokassa;
 use Innokassa\MDK\Client;
 use Innokassa\MDK\Net\Transfer;
 use Innokassa\MDK\Net\ConverterApi;
-use Innokassa\MDK\Logger\LoggerFile;
 use Innokassa\MDK\Net\NetClientCurl;
 use Innokassa\MDK\Services\PipelineBase;
 use Innokassa\MDK\Services\AutomaticBase;
