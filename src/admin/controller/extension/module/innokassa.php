@@ -252,8 +252,7 @@ class ControllerExtensionModuleInnokassa extends Controller
         try {
             $transfer = new Innokassa\MDK\Net\Transfer(
                 new Innokassa\MDK\Net\NetClientCurl(),
-                new Innokassa\MDK\Net\ConverterApi(),
-                new Innokassa\MDK\Logger\LoggerFile()
+                new Innokassa\MDK\Net\ConverterApi()
             );
             $conn = new Innokassa\MDK\Services\ConnectorBase($transfer);
             $conn->testSettings(new SettingsConcrete($settings));
