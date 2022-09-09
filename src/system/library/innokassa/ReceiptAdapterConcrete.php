@@ -27,7 +27,7 @@ class ReceiptAdapterConcrete implements ReceiptAdapterInterface
     /**
      * @inheritDoc
      */
-    public function getItems(string $orderId, int $subType): ReceiptItemCollection
+    public function getItems(string $orderId, string $siteId, int $subType): ReceiptItemCollection
     {
         $paymentMethod = (
             $subType == ReceiptSubType::PRE
@@ -83,7 +83,7 @@ class ReceiptAdapterConcrete implements ReceiptAdapterInterface
     /**
      * @inheritDoc
      */
-    public function getTotal(string $orderId): float
+    public function getTotal(string $orderId, string $siteId): float
     {
         $order = $this->modelSaleOrder->getOrder($orderId);
         return floatval($order['total']);
@@ -92,10 +92,11 @@ class ReceiptAdapterConcrete implements ReceiptAdapterInterface
     /**
      * @inheritDoc
      */
-    public function getCustomer(string $orderId): Customer
+    public function getCustomer(string $orderId, string $siteId): ?Customer
     {
         $order = $this->modelSaleOrder->getOrder($orderId);
-        $customer = new Customer($order['lastname'] . ' ' . $order['firstname']);
+        $customerName = trim($order['lastname'] . ' ' . $order['firstname']);
+        $customer = ($customerName ? new Customer($customerName) : null);
 
         return $customer;
     }
@@ -103,7 +104,7 @@ class ReceiptAdapterConcrete implements ReceiptAdapterInterface
     /**
      * @inheritDoc
      */
-    public function getNotify(string $orderId): Notify
+    public function getNotify(string $orderId, string $siteId): Notify
     {
         $order = $this->modelSaleOrder->getOrder($orderId);
         $notify = new Notify();

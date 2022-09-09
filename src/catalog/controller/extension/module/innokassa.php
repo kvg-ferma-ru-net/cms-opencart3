@@ -1,5 +1,8 @@
 <?php
 
+use Innokassa\MDK\Entities\Receipt;
+use Innokassa\MDK\Services\AutomaticBase;
+use Innokassa\MDK\Settings\SettingsAbstract;
 use Innokassa\MDK\Exceptions\StorageException;
 use Innokassa\MDK\Exceptions\TransferException;
 use Innokassa\MDK\Entities\Atoms\ReceiptSubType;
@@ -49,13 +52,13 @@ class ControllerExtensionModuleInnokassa extends Controller
 
         $receiptSubType = null;
 
-        if (!$settings->getOnly2()) {
+        if ($settings->getScheme() == SettingsAbstract::SCHEME_PRE_FULL) {
             if ($idStatus == $settings->get('module_innokassa_order_status1')) {
                 $receiptSubType = ReceiptSubType::PRE;
             } elseif ($idStatus == $settings->get('module_innokassa_order_status2')) {
                 $receiptSubType = ReceiptSubType::FULL;
             }
-        } elseif ($settings->getOnly2()) {
+        } elseif ($settings->getScheme() == SettingsAbstract::SCHEME_ONLY_FULL) {
             if ($idStatus == $settings->get('module_innokassa_order_status2')) {
                 $receiptSubType = ReceiptSubType::FULL;
             }
@@ -65,13 +68,28 @@ class ControllerExtensionModuleInnokassa extends Controller
             return;
         }
 
+        /** @var AutomaticBase */
         $automatic = $client->serviceAutomatic();
 
         try {
-            $automatic->fiscalize($idOrder, $receiptSubType);
-        } catch (InvalidArgumentException | TransferException | StorageException $e) {
-            throw $e;
+            $automatic->fiscalize($idOrder, '1', $receiptSubType);
         } catch (AutomaticException $e) {
+        } catch (InvalidArgumentException | TransferException | StorageException $e) {
+            $this->log->write(sprintf(
+                'Exception fiscalization order %d receipt sub type %s, detail: %s',
+                $idOrder,
+                $receiptSubType,
+                $e->__toString()
+            ));
+            throw $e;
+        } catch (Exception $e) {
+            $this->log->write(sprintf(
+                'Exception fiscalization order %d receipt sub type %s, detail: %s',
+                $idOrder,
+                $receiptSubType,
+                $e->__toString()
+            ));
+            throw $e;
         }
     }
 
@@ -114,8 +132,8 @@ class ControllerExtensionModuleInnokassa extends Controller
         }
 
         $pipeline = $client->servicePipeline();
-        $pipeline->updateAccepted();
-        $pipeline->updateUnaccepted();
+        $pipeline->update($_SERVER['DOCUMENT_ROOT'] . '/.pipeline');
+        //$pipeline->monitoring($_SERVER['DOCUMENT_ROOT'] . '/innokassa.monitoring', 'start_time');
     }
 
     //######################################################################

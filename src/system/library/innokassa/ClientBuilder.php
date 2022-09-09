@@ -1,14 +1,11 @@
-<?php
+<?php // phpcs:disable // phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
 
 namespace Innokassa;
 
 use Innokassa\MDK\Client;
 use Innokassa\MDK\Net\Transfer;
 use Innokassa\MDK\Net\ConverterApi;
-use Innokassa\MDK\Logger\LoggerFile;
 use Innokassa\MDK\Net\NetClientCurl;
-use Innokassa\MDK\Services\ManualBase;
-use Innokassa\MDK\Services\PrinterBase;
 use Innokassa\MDK\Services\PipelineBase;
 use Innokassa\MDK\Services\AutomaticBase;
 use Innokassa\MDK\Services\ConnectorBase;
@@ -18,6 +15,7 @@ include_once(DIR_SYSTEM . 'library/innokassa/mdk/src/autoload.php');
 include_once('SettingsConcrete.php');
 include_once('ReceiptAdapterConcrete.php');
 include_once('ReceiptStorageConcrete.php');
+include_once('ReceiptIdFactoryMetaConcrete.php');
 
 /**
  * Сборкщик клиента Innokassa MDK
@@ -45,39 +43,28 @@ class ClientBuilder
 
         $settings = new \SettingsConcrete($settingsArray);
         $adapter = new \ReceiptAdapterConcrete($modelOrder, $settings);
+        $receiptIdFactory = new \ReceiptIdFactoryMetaConcrete();
         $storage = new \ReceiptStorageConcrete(
-            new ConverterStorage(),
+            new ConverterStorage($receiptIdFactory),
             $registry->get('db'),
             $this->getTableName()
         );
 
-        $logger = new LoggerFile();
-
         $transfer = new Transfer(
             new NetClientCurl(),
-            new ConverterApi(),
-            $settings->getActorId(),
-            $settings->getActorToken(),
-            $settings->getCashbox(),
-            $logger
+            new ConverterApi()
         );
 
-        $automatic = new AutomaticBase($settings, $storage, $transfer, $adapter);
-        $manual = new ManualBase($storage, $transfer, $settings);
-        $pipeline = new PipelineBase($storage, $transfer);
-        $printer = new PrinterBase($storage, $transfer);
+        $automatic = new AutomaticBase($settings, $storage, $transfer, $adapter, $receiptIdFactory);
+        $pipeline = new PipelineBase($settings, $storage, $transfer, $receiptIdFactory);
         $connector = new ConnectorBase($transfer);
 
         $this->client = new Client(
             $settings,
-            $adapter,
             $storage,
             $automatic,
-            $manual,
             $pipeline,
-            $printer,
-            $connector,
-            $logger
+            $connector
         );
     }
 
