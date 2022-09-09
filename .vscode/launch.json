@@ -9,7 +9,7 @@
             "port": 9003,
             "log": true,
             "pathMappings": {
-                "/var/www/html/": "${workspaceFolder}/opencart/",
+                "/var/www/html/": "${workspaceFolder}/src/",
             },
             "xdebugSettings": {
                 "max_children": 9999,

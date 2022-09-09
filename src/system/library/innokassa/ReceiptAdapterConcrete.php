@@ -92,10 +92,11 @@ class ReceiptAdapterConcrete implements ReceiptAdapterInterface
     /**
      * @inheritDoc
      */
-    public function getCustomer(string $orderId, string $siteId): Customer
+    public function getCustomer(string $orderId, string $siteId): ?Customer
     {
         $order = $this->modelSaleOrder->getOrder($orderId);
-        $customer = new Customer($order['lastname'] . ' ' . $order['firstname']);
+        $customerName = trim($order['lastname'] . ' ' . $order['firstname']);
+        $customer = ($customerName ? new Customer($customerName) : null);
 
         return $customer;
     }
